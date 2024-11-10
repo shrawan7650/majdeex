@@ -1,21 +1,21 @@
 const User = require("../models/User");
 const { hashData, compareData, generateToken } = require("../config/encryption");
-const { successResponse, errorResponse } = require("../utils/apiResponse");
+const { handleResponse } = require("../utils/apiResponse");
 
 // Signup
 exports.signup = async (req, res) => {
   try {
     const { username, email, password } = req.body;
-    
+
     // Validate input (basic check, can be expanded)
     if (!username || !email || !password) {
-      return errorResponse(res, "All fields are required", 400);
+      return handleResponse(res, null, "All fields are required", 400);
     }
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return errorResponse(res, "User already exists", 409);
+      return handleResponse(res, null, "User already exists", 409);
     }
 
     // Hash password and create new user
@@ -26,14 +26,19 @@ exports.signup = async (req, res) => {
     await user.save();
 
     // Send success response
-    successResponse(res, {
-      id: user._id,
-      username: user.username,
-      email: user.email,
-    }, "User created successfully", 201);
+    handleResponse(
+      res,
+      {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+      },
+      "User created successfully",
+      201
+    );
   } catch (error) {
     console.error("Signup error: ", error);
-    errorResponse(res, "Internal server error", 500, error.message);
+    handleResponse(res, error.message, "Internal server error", 500);
   }
 };
 
@@ -44,19 +49,22 @@ exports.login = async (req, res) => {
 
     // Validate input (basic check)
     if (!username || !password) {
-      return errorResponse(res, "Username and password are required", 400);
+      return handleResponse(res, null, "Username and password are required", 400);
     }
 
     // Check if user exists
     const user = await User.findOne({ username });
+    //debuging user
+    console.log("user",user)
     if (!user) {
-      return errorResponse(res, "Invalid credentials", 401);
+      return handleResponse(res, null, "Invalid credentials", 401);
     }
 
     // Compare passwords
     const isPasswordValid = await compareData(password, user.password);
+    console.log("isPasswordValid",isPasswordValid);
     if (!isPasswordValid) {
-      return errorResponse(res, "Invalid credentials", 401);
+      return handleResponse(res, null, "Invalid credentials", 401);
     }
 
     // Generate JWT token
@@ -66,10 +74,17 @@ exports.login = async (req, res) => {
       email: user.email,
     });
 
+    // Set token as a cookie in the response
+    res.cookie("authToken", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // Set true if in production
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
+    
     // Send success response with token
-    successResponse(res, { token }, "Login successful");
+    handleResponse(res, { token }, "Login successful", 200);
   } catch (error) {
     console.error("Login error: ", error);
-    errorResponse(res, "Internal server error", 500, error.message);
+    handleResponse(res, error.message, "Internal server error", 500);
   }
 };

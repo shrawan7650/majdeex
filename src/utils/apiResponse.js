@@ -1,3 +1,4 @@
+
 // Success Response
 exports.successResponse = (res, data, message = 'Success', statusCode = 200) => { 
   return res.status(statusCode).json({
@@ -15,3 +16,13 @@ exports.errorResponse = (res, message = 'Error', statusCode = 500, error = null)
     error,
   });
 };
+// Centralized Response Handler
+exports.handleResponse = (res, data, message, statusCode) => {
+  if (statusCode >= 200 && statusCode < 300) {
+    return exports.successResponse(res, data, message, statusCode);
+  } else {
+    return exports.errorResponse(res, message, statusCode);
+  }
+};
+
+//   return responseHandler.handleResponse(res, data, 'Data retrieved successfully', 200);
