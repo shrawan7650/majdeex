@@ -32,8 +32,8 @@ const CartSchema = new mongoose.Schema(
         },
         quantity: { 
           type: Number, 
-          default: 1, 
-          min: [1, 'Quantity must be at least 1'], // Ensure quantity is at least 1
+          default: 0, 
+          min: [0, 'Quantity must be at least 0'], // Ensure quantity is at least 0
         },
         price: { 
           type: Number, 
