@@ -46,3 +46,5 @@ project-root/
 └── .env                           // Environment variables (sensitive data like DB connection strings, API keys)
 └── README.md                      // Project documentation (setup, usage instructions)
 //schema digram
+![diagram-export-11-11-2024-6_49_51-PM](https://github.com/user-attachments/assets/fe885831-549f-4648-8149-3537e42fd4af)
+
