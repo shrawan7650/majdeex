@@ -160,89 +160,89 @@ exports.removeFromCart = async (req, res) => {
     return handleResponse(res, null, error.message, 500); // Return error response
   }
 };
-// Find the cart for the authenticated user
-const findUserCart = async (userId) => {
-  return await Cart.findOne({ userId });
-};
+// // Find the cart for the authenticated user
+// const findUserCart = async (userId) => {
+//   return await Cart.findOne({ userId });
+// };
 
-// Update product quantity in the cart
-const updateProductQuantity = (cart, productId, quantity, action) => {
-  const productIndex = cart.products.findIndex(
-    (item) => item.productId.toString() === productId
-  );
+// // Update product quantity in the cart
+// const updateProductQuantity = (cart, productId, quantity, action) => {
+//   const productIndex = cart.products.findIndex(
+//     (item) => item.productId.toString() === productId
+//   );
 
-  if (productIndex === -1) {
-    return { error: "Product not found in cart." };
-  }
+//   if (productIndex === -1) {
+//     return { error: "Product not found in cart." };
+//   }
 
-  if (action === "increase") {
-    cart.products[productIndex].quantity += quantity;
-  } else if (action === "decrease") {
-    cart.products[productIndex].quantity = Math.max(
-      0,
-      cart.products[productIndex].quantity - quantity
-    );
-  }
+//   if (action === "increase") {
+//     cart.products[productIndex].quantity += quantity;
+//   } else if (action === "decrease") {
+//     cart.products[productIndex].quantity = Math.max(
+//       0,
+//       cart.products[productIndex].quantity - quantity
+//     );
+//   }
 
-  return { cart };
-};
+//   return { cart };
+// };
 
-// Calculate the total amount
-const calculateTotalAmountQuantity = (cart) => {
-  return cart.products.reduce((total, product) => {
-    return total + product.quantity * product.price; // Assuming price is in the product details
-  }, 0);
-};
-exports.updateQuantity = async (req, res) => {
-  const { productId } = req.params;
-  const { quantity, action } = req.body;
+// // Calculate the total amount
+// const calculateTotalAmountQuantity = (cart) => {
+//   return cart.products.reduce((total, product) => {
+//     return total + product.quantity * product.price; // Assuming price is in the product details
+//   }, 0);
+// };
+// exports.updateQuantity = async (req, res) => {
+//   const { productId } = req.params;
+//   const { quantity, action } = req.body;
 
-  // Validate quantity and action
-  if (typeof quantity !== "number" || quantity < 0) {
-    return handleResponse(
-      res,
-      null,
-      "Quantity must be a non-negative number.",
-      400
-    );
-  }
+//   // Validate quantity and action
+//   if (typeof quantity !== "number" || quantity < 0) {
+//     return handleResponse(
+//       res,
+//       null,
+//       "Quantity must be a non-negative number.",
+//       400
+//     );
+//   }
 
-  if (!["increase", "decrease"].includes(action)) {
-    return handleResponse(
-      res,
-      null,
-      "Action must be either 'increase' or 'decrease'.",
-      400
-    );
-  }
+//   if (!["increase", "decrease"].includes(action)) {
+//     return handleResponse(
+//       res,
+//       null,
+//       "Action must be either 'increase' or 'decrease'.",
+//       400
+//     );
+//   }
 
-  try {
-    // Find the cart for the authenticated user
-    const cart = await findUserCart(req.userId);
-    if (!cart) {
-      return handleResponse(res, null, "Cart not found.", 404);
-    }
+//   try {
+//     // Find the cart for the authenticated user
+//     const cart = await findUserCart(req.userId);
+//     if (!cart) {
+//       return handleResponse(res, null, "Cart not found.", 404);
+//     }
 
-    // Update product quantity
-    const { error } = updateProductQuantity(cart, productId, quantity, action);
-    if (error) {
-      return handleResponse(res, null, error, 404);
-    }
+//     // Update product quantity
+//     const { error } = updateProductQuantity(cart, productId, quantity, action);
+//     if (error) {
+//       return handleResponse(res, null, error, 404);
+//     }
 
-    // Calculate and update total amount
-    cart.totalAmount = calculateTotalAmountQuantity(cart);
+//     // Calculate and update total amount
+//     cart.totalAmount = calculateTotalAmountQuantity(cart);
 
-    // Save the updated cart
-    await cart.save();
+//     // Save the updated cart
+//     await cart.save();
 
-    return handleResponse(res, cart, "Cart updated successfully.", 200);
-  } catch (error) {
-    console.error("Error updating cart:", error);
-    return handleResponse(
-      res,
-      null,
-      "An error occurred while updating the cart.",
-      500
-    );
-  }
-};
+//     return handleResponse(res, cart, "Cart updated successfully.", 200);
+//   } catch (error) {
+//     console.error("Error updating cart:", error);
+//     return handleResponse(
+//       res,
+//       null,
+//       "An error occurred while updating the cart.",
+//       500
+//     );
+//   }
+// };

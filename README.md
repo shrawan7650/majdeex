@@ -45,3 +45,4 @@ project-root/
 |
 └── .env                           // Environment variables (sensitive data like DB connection strings, API keys)
 └── README.md                      // Project documentation (setup, usage instructions)
+//schema digram

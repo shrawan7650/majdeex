@@ -13,6 +13,6 @@ router.get('/getCart', authMiddleware, getCart);
 // Route to remove a product from the cart (DELETE /remove)
 router.delete('/remove/:productId', authMiddleware, removeFromCart);
 //quatity incresease and decrese
-router.put('/updatequantity/:productId', authMiddleware, updateQuantity);
+// router.put('/updatequantity/:productId', authMiddleware, updateQuantity);
 
 module.exports = router;
