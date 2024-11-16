@@ -3,13 +3,13 @@ const mongoose = require('mongoose');
 const wishlistSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User', // Fixed reference to 'User' without extra space
+        ref: 'User', 
         required: true
     },
     products: [{
         productId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Product', // Fixed reference to 'Product' without extra space
+            ref: 'Product',
             required: true
         },
         addedAt: {
@@ -18,8 +18,8 @@ const wishlistSchema = new mongoose.Schema({
         },
         quantity: {
             type: Number,
-            default: 1, // Default quantity if you want to track how many items in the wishlist
-            min: [1, 'Quantity must be at least 1'] // Ensures at least 1 item
+            default: 1, 
+           
         }
     }]
 });

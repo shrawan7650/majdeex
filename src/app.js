@@ -16,10 +16,9 @@ const cartRoutes = require("./routes/cartRoutes"); // Cart routes
 const couponRoutes = require("./routes/couponRoutes"); // Coupon routes
 const orderRoutes = require("./routes/orderRoutes"); // Order routes
 const wishlistRoutes = require("./routes/wishlistRoutes"); // Wishlist routes
-const learningRoutes = require("./routes/learningRoutes"); // Learning module routes
-const trackingRoutes =require('./routes/trackingRoutes')
-
-
+// const trackingRoutes =require('./routes/trackingRoutes')
+const paymentRoutes = require('./routes/paymentRoutes');
+const addressRoutes = require('./routes/addressRoutes');
 // Create an instance of the express app
 const app = express();
 
@@ -27,7 +26,7 @@ const app = express();
 app.use(cors({
   origin: "*", // Allow all origins for testing purposes
   methods: ["GET", "POST", "PUT", "DELETE"], // Specify allowed methods
-  credentials: true // Allow credentials (like cookies) if needed
+  // credentials: true // Allow credentials (like cookies) if needed
 }));
 // Global rate limiter (limit to 100 requests per IP per 1 hour)
 const globalLimiter = rateLimit({
@@ -50,17 +49,12 @@ app.use("/api/cart", cartRoutes); // Cart routes
 app.use("/api/coupons", couponRoutes); // Coupon routes
 app.use("/api/wishlist", wishlistRoutes); // Wishlist routes
 app.use("/api/orders", orderRoutes); // Order routes
-app.use("/api/learning", learningRoutes); // Learning module routes
-app.use('/api/tracking', trackingRoutes);      // Routes for tracking-related endpoint
-// 404 Error handling for undefined routes
+
+// app.use('/api/tracking', trackingRoutes);      // Routes for tracking-related endpoint
+app.use('/api/payment', paymentRoutes);
+app.use('/api', addressRoutes);
 app.use((req, res) => {
   res.status(404).json({ message: "Page Not Found" });
-});
-
-// Global error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: "Something went wrong!" });
 });
 
 // Export the app instance for use in the server

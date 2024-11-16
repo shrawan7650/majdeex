@@ -5,7 +5,7 @@ const TrackingSchema = new mongoose.Schema(
   {
     orderId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Purchase",
+      ref: "Order",
       required: true,
     },
     currentStatus: {
@@ -21,7 +21,7 @@ const TrackingSchema = new mongoose.Schema(
       {
         status: {
           type: String,
-          enum: ["Shipped", "In Transit", "Out for Delivery", "Delivered"],
+          enum: ["Shipped","Pending", "In Transit", "Out for Delivery", "Delivered"],
           required: true,
         },
         timestamp: {

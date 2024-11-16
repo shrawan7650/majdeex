@@ -1,37 +1,14 @@
 const Cart = require("../models/Cart");
 const Coupon = require("../models/Coupen");
 const Product = require("../models/Product");
-const { handleResponse } = require("../utils/apiResponse"); // Assuming this utility exists
-
-// Helper function to validate product IDs
-const validateProductIds = async (productIds) => {
-  // Ensure productIds is an array, even if a single ID is provided
-  if (!Array.isArray(productIds)) {
-    productIds = [productIds];
-  }
-
-  console.log("Validating product IDs:", productIds);
-
-  // Find all products that match the provided IDs
-  const validProducts = await Product.find({ _id: { $in: productIds } });
-
-  console.log("Valid products found:", validProducts);
-
-  // Check if all provided IDs have corresponding valid products
-  return validProducts.length === productIds.length ? productIds : false;
-};
-
+const mongoose = require('mongoose');
 // Helper function to check coupon validity
 const isCouponValid = (coupon, userId) => {
-  //debug
-  console.log("couen", coupon);
-  console.log("userID", userId);
   if (!coupon.isActive || new Date() > coupon.expiryDate) {
     return { valid: false, message: "Coupon is inactive or expired" };
   }
-  console.log("coupon.usedBy.length",coupon.usedBy.length)
-  // Check if the coupon has already been used by the user
-  if (coupon.usedBy.length>=1) {
+
+  if (coupon.usedBy.length >= 1) {
     return { valid: false, message: "Coupon already used by this user" };
   }
   return { valid: true };
@@ -40,34 +17,32 @@ const isCouponValid = (coupon, userId) => {
 // Create a new coupon
 exports.createCoupon = async (req, res) => {
   const { code, discountPercentage, expiryDate, isActive } = req.body;
-  console.log("Received coupon data:", req.body);
-  const { productId } = req.params;
-  //debug
-  console.log("Creating coupon for product:", productId);
+  let { productId } = req.params;
+console.log(
+  "Received coupon data:", req.body,
+  "productId:", productId,
 
+ );
+  // Trim any extraneous characters from productId
+  productId = productId.replace(/[^a-zA-Z0-9]/g, '');
   try {
-    // Check if the coupon code already exists
-    // Check if the coupon code already exists for this product
-// Check if the coupon code already exists for any of the specified products
-const existingCoupon = await Coupon.findOne({
-  code,
-  productId: { $in: productId },
-});
+    // Check if the coupon code already exists for the product
+    const existingCoupon = await Coupon.findOne({
+      code,
+      productId: { $in: productId },
+    });
+    console.log(
+      "Coupon code already exists for the product:", existingCoupon
+    )
     if (existingCoupon) {
-      return handleResponse(res, null, "Coupon code already exists", 400);
+      return res.status(400).json({ message: "Coupon code already exists" });
     }
 
-    // Validate product IDs
-    const areValidProducts = await validateProductIds(productId);
-    console.log(
-      "Validating product IDs:",
-      areValidProducts,
-      "Coupon for product:",
-      productId
-    );
-    if (!areValidProducts) {
-      return handleResponse(res, null, "Some product IDs are invalid", 400);
+    // Ensure productId is valid
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({ message: "Invalid product ID format" });
     }
+    console.log("ok")
 
     // Create and save the new coupon
     const newCoupon = new Coupon({
@@ -77,61 +52,50 @@ const existingCoupon = await Coupon.findOne({
       isActive,
       productId,
     });
-
+console.log("ok1")
     await newCoupon.save();
-    console.log("New coupon created:", newCoupon);
 
-    // Update each product with the new coupon ID
-    await Product.updateMany(
-      { _id: { $in: newCoupon.productId } },
+    // Update the product with the coupon ID
+    await Product.updateOne(
+      { _id: productId },
       { $set: { coupon: newCoupon._id } }
     );
 
-    return handleResponse(res, newCoupon, "Coupon created successfully", 201);
+    return res.status(201).json({ message: "Coupon created successfully", coupon: newCoupon });
   } catch (error) {
     console.error("Error in creating coupon:", error.message);
-    return handleResponse(res, null, error.message, 500);
+    return res.status(500).json({ message: "Error in creating coupon", error: error.message });
   }
-};
+}
 
 // Apply a coupon
 exports.applyCoupon = async (req, res) => {
   const { couponCode } = req.body;
-  console.log("Received coupon application data:", req.body);
   const { productId } = req.params;
-
   const userId = req.userId;
-  console.log("Applying coupon for userId:", userId);
 
   try {
     // Find the coupon by code
     const coupon = await Coupon.findOne({ code: couponCode });
-    console.log("coupon", coupon);
     if (!coupon) {
-      return handleResponse(res, null, "Coupon not found", 404);
+      return res.status(404).json({ message: "Coupon not found" });
     }
 
     // Validate the coupon
     const { valid, message } = isCouponValid(coupon, userId);
-    console.log("Coupon validation result:", valid, message);
     if (!valid) {
-      return handleResponse(res, null, message, 400);
+      return res.status(400).json({ message });
     }
 
     // Check if the coupon applies to the specific product
     if (!coupon.productId.includes(productId)) {
-      return handleResponse(
-        res,
-        null,
-        "Coupon does not apply to this product",
-        400
-      );
+      return res.status(400).json({ message: "Coupon does not apply to this product" });
     }
 
     // Fetch user's cart
     const cart = await Cart.findOne({ userId });
     if (!cart) {
-      return handleResponse(res, null, "Cart not found", 404);
+      return res.status(404).json({ message: "Cart not found" });
     }
 
     // Calculate the discount
@@ -145,18 +109,14 @@ exports.applyCoupon = async (req, res) => {
     await coupon.save();
 
     // Send the response with discount details
-    return handleResponse(
-      res,
-      {
-        discountPercentage: coupon.discountPercentage,
-        discountAmount: discountAmount.toFixed(2),
-        finalPrice: finalPrice.toFixed(2),
-      },
-      "Coupon applied successfully",
-      200
-    );
+    return res.status(200).json({
+      message: "Coupon applied successfully",
+      discountPercentage: coupon.discountPercentage,
+      discountAmount: discountAmount.toFixed(2),
+      finalPrice: finalPrice.toFixed(2),
+    });
   } catch (error) {
     console.error("Error applying coupon:", error.message);
-    return handleResponse(res, null, "Error applying coupon", 500);
+    return res.status(500).json({ message: "Error applying coupon", error: error.message });
   }
 };
